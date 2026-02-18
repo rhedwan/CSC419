@@ -44,10 +44,10 @@ class SmartHomeSimulation:
     
     # Room configuration: (name, base_temperature)
     ROOMS = [
-        ("Living Room", 22.0),
-        ("Bedroom", 18.0),
-        ("Kitchen", 21.0),
-        ("Study", 20.0),
+        ("Living Room", 29.0),
+        ("Bedroom", 27.0),
+        ("Kitchen", 30.0),
+        ("Study", 28.0),
     ]
     
     def __init__(self):

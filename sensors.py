@@ -73,6 +73,10 @@ class TemperatureSensor(SensorSubject):
         self.room_name = room_name
         self.min_temp = 15.0
         self.max_temp = 45.0
+        self._ac_on = False
+        self._ac_cooling_offset = 0.0
+        self._ac_cooling_rate = 0.3  # °C decrease per reading while AC is on
+        self._ac_max_cooling = 6.0   # maximum cooling effect in °C
     
     def read(self, simulated_hour: float) -> float:
         """
@@ -86,13 +90,24 @@ class TemperatureSensor(SensorSubject):
         """
         # Sine wave peaks at 14 (2PM), minimum at 2 (2AM)
         # Formula: base_temp + amplitude * sin((hour - 14) * π / 12)
-        amplitude = (self.max_temp - self.min_temp) / 2
+        amplitude = 5.0
         
         # Calculate sine component (peaks at 14:00)
         sine_component = amplitude * math.sin((simulated_hour - 14) * math.pi / 12)
         
         # Add base temperature offset
         temp = self.base_temp + sine_component
+        
+        # Apply AC cooling effect
+        if self._ac_on:
+            self._ac_cooling_offset = min(
+                self._ac_cooling_offset + self._ac_cooling_rate,
+                self._ac_max_cooling
+            )
+        else:
+            # Gradually recover when AC is off
+            self._ac_cooling_offset = max(self._ac_cooling_offset - 0.2, 0.0)
+        temp -= self._ac_cooling_offset
         
         # Add random noise (±0.5°C)
         noise = random.uniform(-0.5, 0.5)
@@ -112,6 +127,17 @@ class TemperatureSensor(SensorSubject):
         self.notify_observers(sensor_data)
         
         return round(temp, 2)
+
+    def set_ac_state(self, on: bool) -> None:
+        """
+        Set the AC state for this sensor's room.
+        When AC is on, temperature gradually decreases.
+        When AC is off, temperature gradually recovers.
+        
+        Args:
+            on: True to turn AC on, False to turn it off
+        """
+        self._ac_on = on
 
 
 class PIRSensor(SensorSubject):
